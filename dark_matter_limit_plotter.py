@@ -2,6 +2,7 @@ from turtle import color
 import numpy as np
 from matplotlib import pyplot as plt
 from glob import glob
+from scipy.interpolate import interp1d
 
 import mpl_style as mplt
 
@@ -17,7 +18,7 @@ def load_data(fname):
 
     return data
 
-def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', size=6):
+def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', xshift = 0, yshift = 0, txt_col = 'black', size=6):
     """Add a label to a line, at the proper angle.
 
     Arguments
@@ -37,11 +38,12 @@ def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', size=
     y1 = data[1, np.where(data[1] == y)[0][0]]
     y2 = data[1, np.where(data[1] == y)[0][0] + 1]
 
-    text = ax.annotate(label, xy=(x, y), xytext=(0, 0),
+    text = ax.annotate(label, xy=(x, y), xytext=(xshift, yshift),
                        textcoords='offset points',
                        size=size,
                        horizontalalignment=halign,
-                       verticalalignment=valign)
+                       verticalalignment=valign, 
+                       color = txt_col)
 
     sp1 = ax.transData.transform_point((x1, y1))
     sp2 = ax.transData.transform_point((x2, y2))
@@ -54,7 +56,7 @@ def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', size=
     return text
 
 
-def add_limit(ax, fname, txt_pos, fill=True, ls = '-', halign = 'center', valign = 'top'):
+def add_limit(ax, fname, txt_pos, fill=True, ls = '-', halign = 'center', valign = 'top', xshift = 0, yshift = 0, x_end = None):
 
     fname = glob(limit_dir + fname + '*.csv')
     fname = fname[0].rstrip('.csv')
@@ -63,13 +65,24 @@ def add_limit(ax, fname, txt_pos, fill=True, ls = '-', halign = 'center', valign
 
 
     data = load_data(fname)
+
+    interp = interp1d(data[0], data[1], kind='linear', fill_value='extrapolate')
+
+    if x_end != None:
+        x_vals = np.logspace(np.log10(data[0,0]), np.log10(x_end), 100)
+    else:
+        x_vals = data[0]
+
+    y_vals = interp(x_vals)
+
     with plt.rc_context({'lines.linewidth':1}):
-        mplt.loglog(ax, data[0], data[1], ls = ls)
+        plot = mplt.loglog(ax, x_vals, y_vals, ls=ls)
 
     if fill:
-        ax.fill_between(data[0], data[1], 1e-20, color='#ECECEC', ec="none")
+        ax.fill_between(x_vals, y_vals, 1e-20, color='#ECECEC', ec="none")
 
-    label_line(ax, data, fname, data[0, txt_pos], data[1, txt_pos], halign = halign, valign=valign)
+    col = plot.get_lines()[-1].get_color()
+    label_line(ax, data, fname, data[0,txt_pos], data[1,txt_pos], halign = halign, xshift = xshift, yshift = yshift, valign=valign, txt_col = col)
 
 def add_all_lims(ax):
     fnames = glob(limit_dir + '*.csv')
@@ -84,12 +97,21 @@ def add_all_lims(ax):
             add_limit(ax, file)
 
         
-def nu_floor(ax, txt_pos, halign = 'center', valign = 'center_baseline'):
+def nu_floor(ax, txt_pos, halign = 'center', valign = 'center_baseline', x_end = None):
 
     data = np.loadtxt('Neutrino_Floor/nu_floor_Xe.csv', unpack=True)
 
-    mplt.loglog(ax, data[0], data[1], ls = ':', color = 'C07')
-    ax.fill_between(data[0], data[1], 1e-56, alpha = 0.3, color = 'C07', ec = 'none')
+    interp = interp1d(data[0], data[1], kind='linear', fill_value='extrapolate')
+
+    if x_end != None:
+        x_vals = np.logspace(np.log10(data[0,0]), np.log10(x_end), 100)
+    else:
+        x_vals = data[0]
+
+    y_vals = interp(x_vals)
+
+    mplt.loglog(ax, x_vals, y_vals, ls = ':', color = 'C07')
+    ax.fill_between(x_vals, y_vals, 1e-56, alpha = 0.3, color = 'C07', ec = 'none')
     label_line(ax, data, r'$\nu\mathsf{-Floor}$', data[0, txt_pos], data[1, txt_pos], halign = halign, valign=valign)
 
 def add_DAMA(ax):
@@ -97,15 +119,16 @@ def add_DAMA(ax):
     data1 = np.loadtxt('DAMA/DAMA_I.csv', unpack=True)
     data2 = np.loadtxt('DAMA/DAMA_Na.csv', unpack=True)
     # print(data)
-    ax.loglog(data1[0], data1[1], color = 'C08')
+    mplt.loglog(ax, data1[0], data1[1], color = 'C08')
     ax.fill(data1[0], data1[1], alpha = 0.5, color = 'C08')
 
-    ax.loglog(data2[0], data2[1], color='C08')
+    mplt.loglog(ax, data2[0], data2[1], color='C08')
     ax.fill(data2[0], data2[1], alpha=0.5, color='C08')
 
     pos1 = 6
-    ax.annotate('DAMA/I', xy=(data1[0, pos1], data1[1, pos1]), xytext=(5, 20), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', arrowprops=dict(arrowstyle="->", linewidth = 0.5))
-    ax.annotate('DAMA/Na', xy=(data2[0, pos1], data2[1, pos1]), xytext=(10, 10), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', arrowprops=dict(arrowstyle="->", linewidth = 0.5))
+    col = ax.get_lines()[-1].get_color()
+    ax.annotate('DAMA/I', xy=(data1[0, pos1], data1[1, pos1]), xytext=(-6, 5), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', color = col)
+    ax.annotate('DAMA/Na', xy=(data2[0, pos1], data2[1, pos1]), xytext=(10, 10), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', color = col)
     
 if __name__ == "__main__":
     
@@ -113,25 +136,31 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots()
 
+    x_end = 1e3
     plt.ylim(1e-50, 1e-36)
-    plt.xlim(5e-1, 1e3)
+    plt.xlim(5e-1, x_end)
     # with plt.rc_context({'font.size':10}):
     plt.xlabel(r'$\mathrm{Dark\; Matter\; Mass\;(GeV/}c^2\mathrm{)}$', fontsize = 8)
-    plt.ylabel(r'$\mathrm{Dark\;Matter-Nucleon}\;\sigma_{SI}\;\mathrm{(cm}^2\mathrm{)}$', fontsize = 8)
+    plt.ylabel(r'$\mathrm{Cross\;Section}\;\sigma_{SI}\;\mathrm{(cm}^2\mathrm{)}$', fontsize = 8)
 
     # add_all_lims(ax)
 
-    add_limit(ax, 'XENON', 12, halign='center', valign='center_baseline')
-    add_limit(ax, 'DARWIN', -16, ls = '--', fill= False, halign = 'center', valign='bottom')
-    add_limit(ax, 'CREST', 12, halign='center', valign='center_baseline')
-    add_limit(ax, 'Dark Side', -15, halign='center', valign='center_baseline')
-    # add_limit(ax, 'DEAP', -10, halign = 'left', valign='center')
-    add_limit(ax, 'Panda', -20, valign='top')
-    add_limit(ax, 'SuperCDMS', 9, halign='right', valign='center')
-    add_limit(ax, 'COSINE', -4, halign='right', valign='center')
+    add_limit(ax, 'XENON', -10, yshift = 9)
+    add_limit(ax, 'DARWIN', -16, ls = '--', fill= False, yshift = 8, x_end = x_end)
+    add_limit(ax, 'Dark Side', -15, yshift = 10,  x_end = x_end)
+    add_limit(ax, 'DEAP', -10, xshift = -5, yshift=-1)
+    # add_limit(ax, 'SuperCDMS', 9, halign='right', x_end = x_end)
+    # next(ax._get_lines.prop_cycler)
+    add_limit(ax, 'LZ', -20, yshift = -1, x_end = x_end)
+    add_limit(ax, 'Panda', -13, x_end = x_end)
+    add_limit(ax, 'COSINE', -12, xshift = -5, yshift = 10, x_end = x_end)
+    # add_limit(ax, 'LUX', -20, x_end = x_end)
+    add_limit(ax, 'CDMSlite', 5)
+    add_limit(ax, 'CREST', -10)
 
 
-    nu_floor(ax, 8, valign='top')
+
+    nu_floor(ax, 8, valign='top', x_end = x_end)
 
     add_DAMA(ax)
 
