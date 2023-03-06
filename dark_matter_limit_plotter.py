@@ -140,8 +140,8 @@ if __name__ == "__main__":
     plt.ylim(1e-50, 1e-36)
     plt.xlim(5e-1, x_end)
     # with plt.rc_context({'font.size':10}):
-    plt.xlabel(r'$\mathrm{Dark\; Matter\; Mass\;(GeV/}c^2\mathrm{)}$', fontsize = 8)
-    plt.ylabel(r'$\mathrm{Cross\;Section}\;\sigma_{SI}\;\mathrm{(cm}^2\mathrm{)}$', fontsize = 8)
+    plt.xlabel(r'$\mathrm{Dark\; Matter\; Mass\;(GeV/}c^2\mathrm{)}$')
+    plt.ylabel(r'$\mathrm{Cross\;Section}\;\sigma_{SI}\;\mathrm{(cm}^2\mathrm{)}$')
 
     # add_all_lims(ax)
 
