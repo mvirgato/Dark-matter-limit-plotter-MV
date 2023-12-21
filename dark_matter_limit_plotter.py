@@ -110,8 +110,8 @@ def nu_floor(ax, txt_pos, halign = 'center', valign = 'center_baseline', x_end =
 
     y_vals = interp(x_vals)
 
-    mplt.loglog(ax, x_vals, y_vals, ls = ':', color = 'C07')
-    ax.fill_between(x_vals, y_vals, 1e-56, alpha = 0.3, color = 'C07', ec = 'none')
+    mplt.loglog(ax, x_vals, y_vals, ls = ':', color = 'C02')
+    ax.fill_between(x_vals, y_vals, 1e-56, alpha = 0.3, color = 'C02', ec = 'none')
     label_line(ax, data, r'$\nu\mathsf{-Floor}$', data[0, txt_pos], data[1, txt_pos], halign = halign, valign=valign)
 
 def add_DAMA(ax):
@@ -147,10 +147,11 @@ if __name__ == "__main__":
 
     add_limit(ax, 'XENON', -10, yshift = 9)
     add_limit(ax, 'DARWIN', -16, ls = '--', fill= False, yshift = 8, x_end = x_end)
-    add_limit(ax, 'Dark Side', -15, yshift = 10,  x_end = x_end)
-    add_limit(ax, 'DEAP', -10, xshift = -5, yshift=-1)
-    # add_limit(ax, 'SuperCDMS', 9, halign='right', x_end = x_end)
+    next(ax._get_lines.prop_cycler)
     # next(ax._get_lines.prop_cycler)
+    add_limit(ax, 'Dark Side', -15, yshift = 10,  x_end = x_end)
+    # add_limit(ax, 'DEAP', -10, xshift = -5, yshift=-1)
+    # add_limit(ax, 'SuperCDMS', 9, halign='right', x_end = x_end)
     add_limit(ax, 'LZ', -20, yshift = -1, x_end = x_end)
     add_limit(ax, 'Panda', -13, x_end = x_end)
     add_limit(ax, 'COSINE', -12, xshift = -5, yshift = 10, x_end = x_end)
@@ -159,8 +160,9 @@ if __name__ == "__main__":
     add_limit(ax, 'CREST', -10)
 
 
-
-    nu_floor(ax, 8, valign='top', x_end = x_end)
+    next(ax._get_lines.prop_cycler)
+    next(ax._get_lines.prop_cycler)
+    nu_floor(ax, 8, valign='top', x_end=x_end)
 
     add_DAMA(ax)
 

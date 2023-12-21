@@ -2,6 +2,7 @@ import matplotlib
 import matplotlib.ticker
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 
 plt.style.use('mvstyle')
 
@@ -21,6 +22,20 @@ plt.style.use('mvstyle')
 # matplotlib.ticker.AutoMinorLocator = MyLocator
 # matplotlib.ticker.LogLocator = MyLogLocator
 
+
+class MyLogFormatter(matplotlib.ticker.LogFormatterMathtext):
+    def __call__(self, x, pos=None):
+        # call the original LogFormatter
+        rv = matplotlib.ticker.LogFormatterMathtext.__call__(self, x, pos)
+
+        # check if we really use TeX
+        if matplotlib.rcParams["text.usetex"]:
+            # if we have the string ^{- there is a negative exponent
+            # where the minus sign is replaced by the short hyphen
+            rv = re.sub(r'\^\{-', r'^{\\text{-}', rv)
+
+        return rv
+
 def loglog(ax, *args, **kwargs):
 
     ax.loglog(*args, **kwargs)
@@ -38,6 +53,9 @@ def loglog(ax, *args, **kwargs):
     locminy = matplotlib.ticker.LogLocator(base=10.0, subs=np.linspace(0.1, 0.9, 9), numticks=100)
     ax.yaxis.set_minor_locator(locminy)
     ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+
+    ax.yaxis.set_major_formatter(MyLogFormatter())
+    ax.xaxis.set_major_formatter(MyLogFormatter())
 
     return ax
 
