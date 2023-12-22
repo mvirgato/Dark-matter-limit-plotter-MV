@@ -1,22 +1,57 @@
-from turtle import color
 import numpy as np
 from matplotlib import pyplot as plt
 from glob import glob
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, BSpline, splrep
 
 import mpl_style as mplt
 
-plt.style.use('mvstyle')
+plt.style.use(['mvstyle', 'one_piece'])
 
 limit_dir = 'Limits_DM/'
 
-def load_data(fname):
+def load_data(fname, int_type):
 
-    file = limit_dir + fname + '.csv'
+    file = int_type + '_' + limit_dir + fname + '.dat'
 
     data = np.loadtxt(file, unpack=True)
 
     return data
+
+
+def make_spline(x_data, y_data, smoothing=0.1, degree=3, xscale = 'log', yscale = 'log'):
+    '''
+    Makes a Bspline rep interolating function. 
+    
+    Inputs:
+    --------
+    x_data: range of x values
+    y_data: range of y values
+    smoothing: amount of smoothing to apply to the data. 's' value in splines
+    degree: degree of the fitting polynomial
+
+    Outputs:
+    ---------
+    An interpolating function over the x values supplied
+    '''
+
+    if xscale == 'log' and yscale == 'log':
+
+        lx_data = np.log10(x_data)
+        ly_data = np.log10(y_data)
+
+        linterp = splrep(lx_data, ly_data, s=smoothing, k=degree)
+
+        def __interpolating_function(_xx):
+            return 10**BSpline(*linterp)(np.log10(_xx))
+
+    else:
+
+        linterp = splrep(x_data, y_data, s=smoothing, k=degree)
+
+        def __interpolating_function(_xx):
+            return BSpline(*linterp)(_xx)
+    
+    return __interpolating_function
 
 def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', xshift = 0, yshift = 0, txt_col = 'black', size=6):
     """Add a label to a line, at the proper angle.
@@ -56,22 +91,22 @@ def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', xshif
     return text
 
 
-def add_limit(ax, fname, txt_pos, fill=True, ls = '-', halign = 'center', valign = 'top', xshift = 0, yshift = 0, x_end = None):
+def add_limit(ax, int_type, fname, txt_pos, fill=True, ls = '-', halign = 'center', valign = 'top', xshift = 0, yshift = 0, x_end = None):
 
-    fname = glob(limit_dir + fname + '*.csv')
-    fname = fname[0].rstrip('.csv')
-    fname = fname.lstrip('Limits_DM')
+    fname = glob(int_type + '_' + limit_dir + fname + '*.dat')
+    fname = fname[0].rstrip('.dat')
+    fname = fname.lstrip(int_type + '_Limits_DM')
     fname = fname.lstrip('/')
 
 
-    data = load_data(fname)
+    data = load_data(fname, int_type)
 
-    interp = interp1d(data[0], data[1], kind='linear', fill_value='extrapolate')
+    interp = make_spline(data[0], data[1], smoothing=0.01, degree=2)
 
-    if x_end != None:
-        x_vals = np.logspace(np.log10(data[0,0]), np.log10(x_end), 100)
-    else:
-        x_vals = data[0]
+    # if x_end != None:
+    #     x_vals = np.logspace(np.log10(data[0,0]), np.log10(x_end), 100)
+    # else:
+    x_vals = data[0]
 
     y_vals = interp(x_vals)
 
@@ -85,10 +120,10 @@ def add_limit(ax, fname, txt_pos, fill=True, ls = '-', halign = 'center', valign
     label_line(ax, data, fname, data[0,txt_pos], data[1,txt_pos], halign = halign, xshift = xshift, yshift = yshift, valign=valign, txt_col = col)
 
 def add_all_lims(ax):
-    fnames = glob(limit_dir + '*.csv')
+    fnames = glob(limit_dir + '*.dat')
 
     for file in fnames:
-        file = file.rstrip('.csv')
+        file = file.rstrip('.dat')
         file = file.lstrip('Limits_DM')
         file = file.lstrip('/')
         if file == 'DARWIN':
@@ -97,9 +132,9 @@ def add_all_lims(ax):
             add_limit(ax, file)
 
         
-def nu_floor(ax, txt_pos, halign = 'center', valign = 'center_baseline', x_end = None):
+def nu_floor(ax, target, txt_pos, halign = 'center', valign = 'center_baseline', x_end = None):
 
-    data = np.loadtxt('Neutrino_Floor/nu_floor_Xe.csv', unpack=True)
+    data = np.loadtxt(f'Neutrino_Floor/nu_floor_{target}.dat', unpack=True)
 
     interp = interp1d(data[0], data[1], kind='linear', fill_value='extrapolate')
 
@@ -110,63 +145,30 @@ def nu_floor(ax, txt_pos, halign = 'center', valign = 'center_baseline', x_end =
 
     y_vals = interp(x_vals)
 
-    mplt.loglog(ax, x_vals, y_vals, ls = ':', color = 'C02')
-    ax.fill_between(x_vals, y_vals, 1e-56, alpha = 0.3, color = 'C02', ec = 'none')
+    mplt.loglog(ax, x_vals, y_vals, ls = ':')
+    col = ax.get_lines()[-1].get_color()
+    ax.fill_between(x_vals, y_vals, 1e-56, alpha = 0.3, color = col, ec = 'none')
     label_line(ax, data, r'$\nu\mathsf{-Floor}$', data[0, txt_pos], data[1, txt_pos], halign = halign, valign=valign)
 
 def add_DAMA(ax):
 
-    data1 = np.loadtxt('DAMA/DAMA_I.csv', unpack=True)
-    data2 = np.loadtxt('DAMA/DAMA_Na.csv', unpack=True)
+    data1 = np.loadtxt('DAMA/DAMA_I.dat', unpack=True)
+    data2 = np.loadtxt('DAMA/DAMA_Na.dat', unpack=True)
     # print(data)
-    mplt.loglog(ax, data1[0], data1[1], color = 'C08')
-    ax.fill(data1[0], data1[1], alpha = 0.5, color = 'C08')
+    mplt.loglog(ax, data1[0], data1[1])
+    col = ax.get_lines()[-1].get_color()
+    ax.fill(data1[0], data1[1], alpha = 0.5, color = col)
 
-    mplt.loglog(ax, data2[0], data2[1], color='C08')
-    ax.fill(data2[0], data2[1], alpha=0.5, color='C08')
+    mplt.loglog(ax, data2[0], data2[1], color = col)
+    ax.fill(data2[0], data2[1], alpha=0.5, color = col)
 
     pos1 = 6
-    col = ax.get_lines()[-1].get_color()
     ax.annotate('DAMA/I', xy=(data1[0, pos1], data1[1, pos1]), xytext=(-6, 5), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', color = col)
     ax.annotate('DAMA/Na', xy=(data2[0, pos1], data2[1, pos1]), xytext=(10, 10), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', color = col)
     
 if __name__ == "__main__":
     
-    data = np.loadtxt('Limits_DM/COSINE-100.csv', unpack=True)
+    # data = np.loadtxt('Limits_DM/COSINE-100.dat', unpack=True)
 
-    fig, ax = plt.subplots()
-
-    x_end = 1e3
-    plt.ylim(1e-50, 1e-36)
-    plt.xlim(5e-1, x_end)
-    # with plt.rc_context({'font.size':10}):
-    plt.xlabel(r'$\mathrm{Dark\; Matter\; Mass\;(GeV/}c^2\mathrm{)}$')
-    plt.ylabel(r'$\mathrm{Cross\;Section}\;\sigma_{SI}\;\mathrm{(cm}^2\mathrm{)}$')
-
-    # add_all_lims(ax)
-
-    add_limit(ax, 'XENON', -10, yshift = 9)
-    add_limit(ax, 'DARWIN', -16, ls = '--', fill= False, yshift = 8, x_end = x_end)
-    next(ax._get_lines.prop_cycler)
-    # next(ax._get_lines.prop_cycler)
-    add_limit(ax, 'Dark Side', -15, yshift = 10,  x_end = x_end)
-    # add_limit(ax, 'DEAP', -10, xshift = -5, yshift=-1)
-    # add_limit(ax, 'SuperCDMS', 9, halign='right', x_end = x_end)
-    add_limit(ax, 'LZ', -20, yshift = -1, x_end = x_end)
-    add_limit(ax, 'Panda', -13, x_end = x_end)
-    add_limit(ax, 'COSINE', -12, xshift = -5, yshift = 10, x_end = x_end)
-    # add_limit(ax, 'LUX', -20, x_end = x_end)
-    add_limit(ax, 'CDMSlite', 5)
-    add_limit(ax, 'CREST', -10)
-
-
-    next(ax._get_lines.prop_cycler)
-    next(ax._get_lines.prop_cycler)
-    nu_floor(ax, 8, valign='top', x_end=x_end)
-
-    add_DAMA(ax)
-
-
-    plt.savefig('DM_limits.pdf')
-    # plt.show()
+    pass
 

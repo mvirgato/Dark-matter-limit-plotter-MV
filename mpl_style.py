@@ -1,10 +1,12 @@
+import math
 import matplotlib
 import matplotlib.ticker
 import matplotlib.pyplot as plt
+from matplotlib import text as mtext
 import numpy as np
 import re
 
-plt.style.use('mvstyle')
+# plt.style.use('mvstyle')
 
 # class MyLocator(matplotlib.ticker.AutoMinorLocator):
 #     def __init__(self, n=23):
@@ -56,6 +58,9 @@ def loglog(ax, *args, **kwargs):
 
     ax.yaxis.set_major_formatter(MyLogFormatter())
     ax.xaxis.set_major_formatter(MyLogFormatter())
+
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(10**np.round(np.log10(ymin)), 10**np.round(np.log10(ymax)))
 
     return ax
 
@@ -118,11 +123,6 @@ def generate_subplots(k, row_wise=True):
 #     plt.show()
 
 
-from matplotlib import pyplot as plt
-from matplotlib import patches
-from matplotlib import text as mtext
-import numpy as np
-import math
 
 class CurvedText(mtext.Text):
     """
@@ -282,3 +282,49 @@ class CurvedText(mtext.Text):
 
             #updating rel_pos to right edge of character
             rel_pos += w-used
+
+
+def label_line(ax, data, label, x_pos_data_coord, halign='center', valign='bottom', xshift=0, yshift=0, rotn_adj=0, txt_col='black', size=10):
+
+    """Add a label to a line, at the proper angle.
+
+    Arguments
+    ---------
+    line : matplotlib.lines.Line2D object,
+    label : str
+    x : float
+        x-position to place center of text (in data coordinated
+    y : float
+        y-position to place center of text (in data coordinates)
+    color : str
+    size : float
+    """
+    data = np.array(data, dtype='float64')
+
+    loc_point = np.abs(data[0] - x_pos_data_coord).argmin()
+
+    x1 = np.log10(data[0][loc_point])
+    x2 = np.log10(data[0][loc_point + 2])
+    y1 = np.log10(data[1][loc_point])
+    y2 = np.log10(data[1][loc_point + 2])
+
+    text = ax.annotate(label, xy=(10**x1, 10**y1), xytext=(xshift, yshift),
+                       textcoords='offset points',
+                       size=size,
+                       horizontalalignment=halign,
+                       verticalalignment=valign,
+                       color=txt_col,
+                       transform=ax.transAxes)
+
+    # sp1 = ax.transData.transform_point((x1, y1))
+    # sp2 = ax.transData.transform_point((x2, y2))
+
+    # rise = (sp2[1] - sp1[1])
+    # run = (sp2[0] - sp1[0])
+
+    rise = y2 - y1
+    run  = x2 - x1
+
+    slope_degrees = np.degrees(np.arctan2(rise, run))
+    text.set_rotation(slope_degrees + rotn_adj)
+    return text
