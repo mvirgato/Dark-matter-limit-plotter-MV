@@ -53,7 +53,7 @@ def make_spline(x_data, y_data, smoothing=0.1, degree=3, xscale = 'log', yscale 
     
     return __interpolating_function
 
-def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', xshift = 0, yshift = 0, txt_col = 'black', size=6):
+def label_line(ax, data, label, x, y, halign = 'right', valign = 'center', xshift = 0, yshift = 0, txt_col = 'black', size=8):
     """Add a label to a line, at the proper angle.
 
     Arguments
@@ -163,8 +163,8 @@ def add_DAMA(ax):
     ax.fill(data2[0], data2[1], alpha=0.5, color = col)
 
     pos1 = 6
-    ax.annotate('DAMA/I', xy=(data1[0, pos1], data1[1, pos1]), xytext=(-6, 5), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', color = col)
-    ax.annotate('DAMA/Na', xy=(data2[0, pos1], data2[1, pos1]), xytext=(10, 10), textcoords='offset points', size=6, horizontalalignment='center', verticalalignment='bottom', color = col)
+    ax.annotate('DAMA/I', xy=(data1[0, pos1], data1[1, pos1]), xytext=(-6, 5), textcoords='offset points', size=8, horizontalalignment='center', verticalalignment='bottom', color = col)
+    ax.annotate('DAMA/Na', xy=(data2[0, pos1], data2[1, pos1]), xytext=(10, 10), textcoords='offset points', size=8, horizontalalignment='center', verticalalignment='bottom', color = col)
     
 if __name__ == "__main__":
     

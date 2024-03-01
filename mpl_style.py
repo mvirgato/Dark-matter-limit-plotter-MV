@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import text as mtext
 import numpy as np
 import re
+from scipy.interpolate import splrep, BSpline
 
 # plt.style.use('mvstyle')
 
@@ -328,3 +329,37 @@ def label_line(ax, data, label, x_pos_data_coord, halign='center', valign='botto
     slope_degrees = np.degrees(np.arctan2(rise, run))
     text.set_rotation(slope_degrees + rotn_adj)
     return text
+
+def make_spline(x_data, y_data, smoothing, degree, xscale = 'linear', yscale = 'linear'):
+    '''
+    Makes a Bspline rep interolating function. 
+    
+    Inputs:
+    --------
+    x_data: range of x values
+    y_data: range of y values
+    smoothing: amount of smoothing to apply to the data. 's' value in splines
+    degree: degree of the fitting polynomial
+
+    Outputs:
+    ---------
+    An interpolating function over the x values supplied
+    '''
+
+    if xscale == 'log' and yscale == 'log':
+
+        lx_data, ly_data = np.log10(x_data), np.log10(y_data)
+
+        linterp = splrep(lx_data, ly_data, s=smoothing, k=degree)
+
+        def __interpolating_function(_xx):
+            return 10**BSpline(*linterp)(np.log10(_xx))
+
+    else:
+
+        linterp = splrep(x_data, y_data, s=smoothing, k=degree)
+
+        def __interpolating_function(_xx):
+            return BSpline(*linterp)(_xx)
+    
+    return __interpolating_function
