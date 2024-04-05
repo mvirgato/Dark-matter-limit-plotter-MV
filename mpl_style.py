@@ -330,7 +330,7 @@ def label_line(ax, data, label, x_pos_data_coord, halign='center', valign='botto
     text.set_rotation(slope_degrees + rotn_adj)
     return text
 
-def make_spline(x_data, y_data, smoothing, degree, xscale = 'linear', yscale = 'linear'):
+def make_spline(x_data, y_data, smoothing, degree, xscale = 'log', yscale = 'log'):
     '''
     Makes a Bspline rep interolating function. 
     

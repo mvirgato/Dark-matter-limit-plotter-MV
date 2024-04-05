@@ -19,14 +19,17 @@ if __name__ == "__main__":
 
     # add_all_lims(ax)
 
-    add_limit(ax, int, 'XENON', 10, yshift = 4)
-    add_limit(ax, int, 'PICO', -10, yshift = 9)
-    add_limit(ax, int, 'PICASSO', -10, yshift = 9)
-    add_limit(ax, int, 'LUX', -5, yshift = -1)
-    add_limit(ax, int, 'Panda', -10, yshift = 9)
-    add_limit(ax, int, 'CRESST', -20, yshift = 9)
+    add_limit(ax, int, 'XENON', -15, valign = 'top')
+    add_limit(ax, int, 'PICO', -10, valign = 'top')
+    add_limit(ax, int, 'PICASSO', -10, valign = 'bottom')
+    add_limit(ax, int, 'LUX', -5, valign = 'top')
+    add_limit(ax, int, 'Panda', -10, valign = 'bottom')
+    next(ax._get_lines.prop_cycler)
+    next(ax._get_lines.prop_cycler) 
+    add_limit(ax, int, 'CRESST', -20, valign = 'bottom')
 
 
+    next(ax._get_lines.prop_cycler)
     next(ax._get_lines.prop_cycler)
     next(ax._get_lines.prop_cycler)
     next(ax._get_lines.prop_cycler)
@@ -43,5 +46,5 @@ if __name__ == "__main__":
     # add_DAMA(ax)
 
 
-    plt.savefig('DM_limits_SD_p.pdf')
+    plt.savefig('plots/DM_limits_SD_p.pdf')
     plt.show()
