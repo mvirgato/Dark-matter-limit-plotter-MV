@@ -60,11 +60,23 @@ def loglog(ax, *args, **kwargs):
     ax.yaxis.set_major_formatter(MyLogFormatter())
     ax.xaxis.set_major_formatter(MyLogFormatter())
 
-    ymin, ymax = ax.get_ylim()
-    ax.set_ylim(10**np.round(np.log10(ymin)), 10**np.round(np.log10(ymax)))
+    # ymin, ymax = ax.get_ylim()
+    # ax.set_ylim(10**np.ceil(np.log10(ymin)), 10**np.ceil(np.log10(ymax)))
+
+    # xmin, xmax = ax.get_xlim()
+    # ax.set_xlim(10**np.ceil(np.log10(xmin)), 10**np.ceil(np.log10(xmax)))
 
     return ax
 
+def set_lims(ax):
+    '''
+    Try to set bet axis limits
+    '''
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim(10**np.ceil(np.log10(ymin)), 10**np.ceil(np.log10(ymax)))
+
+    xmin, xmax = ax.get_xlim()
+    ax.set_xlim(10**np.ceil(np.log10(xmin)), 10**np.floor(np.log10(xmax)))
 
 def choose_subplot_dimensions(k):
     if k < 2:
@@ -304,12 +316,12 @@ def label_line(ax, data, label, x_pos_data_coord, halign='center', valign='botto
 
     loc_point = np.abs(data[0] - x_pos_data_coord).argmin()
 
-    x1 = np.log10(data[0][loc_point])
-    x2 = np.log10(data[0][loc_point + 2])
-    y1 = np.log10(data[1][loc_point])
-    y2 = np.log10(data[1][loc_point + 2])
+    x1 = data[0][loc_point]
+    x2 = data[0][loc_point + 2]
+    y1 = data[1][loc_point]
+    y2 = data[1][loc_point + 2]
 
-    text = ax.annotate(label, xy=(10**x1, 10**y1), xytext=(xshift, yshift),
+    text = ax.annotate(label, xy=(x1, y1), xytext=(xshift, yshift),
                        textcoords='offset points',
                        size=size,
                        horizontalalignment=halign,
@@ -317,14 +329,14 @@ def label_line(ax, data, label, x_pos_data_coord, halign='center', valign='botto
                        color=txt_col,
                        transform=ax.transAxes)
 
-    # sp1 = ax.transData.transform_point((x1, y1))
-    # sp2 = ax.transData.transform_point((x2, y2))
+    sp1 = ax.transData.transform_point((x1, y1))
+    sp2 = ax.transData.transform_point((x2, y2))
 
-    # rise = (sp2[1] - sp1[1])
-    # run = (sp2[0] - sp1[0])
+    rise = (sp2[1] - sp1[1])
+    run = (sp2[0] - sp1[0])
 
-    rise = y2 - y1
-    run  = x2 - x1
+    # rise = y2 - y1
+    # run  = x2 - x1
 
     slope_degrees = np.degrees(np.arctan2(rise, run))
     text.set_rotation(slope_degrees + rotn_adj)
