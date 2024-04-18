@@ -367,6 +367,15 @@ def make_spline(x_data, y_data, smoothing, degree, xscale = 'log', yscale = 'log
         def __interpolating_function(_xx):
             return 10**BSpline(*linterp)(np.log10(_xx))
 
+    elif xscale == 'linear' and yscale == 'log':
+        
+        ly_data = np.log10(y_data)
+
+        linterp = splrep(x_data, ly_data, s=smoothing, k=degree)
+
+        def __interpolating_function(_xx):
+            return 10**BSpline(*linterp)(_xx)
+        
     else:
 
         linterp = splrep(x_data, y_data, s=smoothing, k=degree)
